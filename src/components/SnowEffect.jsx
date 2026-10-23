@@ -2,9 +2,11 @@ import React, { useEffect, useRef } from 'react';
 
 /**
  * SnowEffect Component
- * - Tuyết rơi nền: hạt tuyết tròn nhẹ bé tí, có độ tương phản rõ để nổi bật trên cả nền và các thẻ thông tin.
- * - Khi di tay / di con trỏ trên màn hình: các cánh tuyết ❄️ bé vừa đẹp rải rác đi theo đường di chuyển của ngón tay / con trỏ rồi nhẹ nhàng rơi xuống và tan biến (không bung thành chùm).
- * - Sử dụng pointer-events: none để không cản trở thao tác chạm.
+ * - Tuyết rơi nền: các hạt tuyết tròn nhẹ bé tí rơi tự nhiên.
+ * - Khi người dùng nhấn vào màn hình:
+ *   + Bông tuyết trung tâm nở ra vừa vặn.
+ *   + Các cánh tuyết ❄️ tách thoáng khỏi tâm và nổ/tõe rộng ra xung quanh (bán kính rộng ~80-130px),
+ *     không bị chụm vào nhau, sau đó nhẹ nhàng lơ lửng rơi xuống và tan biến.
  */
 const SnowEffect = ({ isDark = false }) => {
   const canvasRef = useRef(null);
@@ -31,94 +33,98 @@ const SnowEffect = ({ isDark = false }) => {
 
     window.addEventListener('resize', handleResize);
 
-    // 1. Hạt tuyết rơi nền: tròn nhẹ, hạt bé tí (radius 1.0px -> 2.1px), nhìn rõ trên các thẻ màu dịu
+    // 1. Hạt tuyết rơi nền: tròn nhẹ, hạt bé tí
     const flakeCount = Math.min(55, Math.max(32, Math.floor(width / 15)));
     const ambientFlakes = Array.from({ length: flakeCount }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      radius: Math.random() * 1.1 + 1.0,
-      speedY: Math.random() * 0.6 + 0.3,
-      speedX: (Math.random() - 0.5) * 0.28,
+      radius: Math.random() * 1.1 + 0.9,
+      speedY: Math.random() * 0.55 + 0.28,
+      speedX: (Math.random() - 0.5) * 0.25,
       swingAngle: Math.random() * Math.PI * 2,
       swingSpeed: Math.random() * 0.018 + 0.008,
-      opacity: Math.random() * 0.35 + 0.6,
+      opacity: Math.random() * 0.35 + 0.55,
     }));
 
-    // 2. Danh sách cánh tuyết ❄️ rải rác đi theo con trỏ / ngón tay
-    const trailFlakes = [];
-    let lastSpawnX = -999;
-    let lastSpawnY = -999;
-    let lastSpawnTime = 0;
+    // 2. Danh sách cánh tuyết ❄️ nổ bung rộng khi nhấn vào màn hình
+    const burstFlakes = [];
 
-    // Tạo 1 cánh tuyết ❄️ đơn lẻ rải rác theo vị trí con trỏ / ngón tay
-    const spawnSingleTrailFlake = (clientX, clientY, velocityX = 0, velocityY = 0) => {
-      const offsetX = (Math.random() - 0.5) * 14;
-      const offsetY = (Math.random() - 0.5) * 14;
-
-      trailFlakes.push({
-        x: clientX + offsetX,
-        y: clientY + offsetY,
-        vx: velocityX * 0.08 + (Math.random() - 0.5) * 0.55,
-        vy: Math.max(-0.3, velocityY * 0.05) + Math.random() * 0.45 + 0.35,
-        swing: Math.random() * Math.PI * 2,
-        swingSpeed: Math.random() * 0.05 + 0.025,
-        size: Math.random() * 2.2 + 4.8, // Cánh tuyết ❄️ bé vừa đẹp (~9px - 14px)
-        alpha: 1,
-        decay: Math.random() * 0.01 + 0.009,
-        rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.035,
+    const spawnBloomSnowflakes = (clientX, clientY) => {
+      // Bông tuyết trung tâm nở bung tại điểm nhấn
+      burstFlakes.push({
+        isCenterBloom: true,
+        x: clientX,
+        y: clientY,
+        size: 4,
+        maxSize: 16,
+        growSpeed: 1.1,
+        alpha: 0.95,
+        decay: 0.028,
+        rotation: Math.random() * Math.PI,
+        rotationSpeed: 0.035,
       });
 
-      // Giới hạn số lượng hạt để luôn mượt 60fps
-      if (trailFlakes.length > 90) {
-        trailFlakes.shift();
+      // Vòng ngoài: 10 cánh tuyết ❄️ nổ bung rộng ra xa (tách sẵn khỏi tâm 14px để không chụm vào nhau)
+      const outerCount = 10;
+      for (let i = 0; i < outerCount; i++) {
+        const baseAngle = (Math.PI * 2 * i) / outerCount;
+        const angle = baseAngle + (Math.random() - 0.5) * 0.18;
+        const startDist = 14 + Math.random() * 6; // Tách khỏi tâm ngay từ đầu
+        const speed = Math.random() * 1.6 + 3.6; // Tốc độ bung rộng thoáng (~90px - 130px)
+        burstFlakes.push({
+          isCenterBloom: false,
+          x: clientX + Math.cos(angle) * startDist,
+          y: clientY + Math.sin(angle) * startDist,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          gravity: 0.03,
+          drag: 0.962,
+          swing: Math.random() * Math.PI * 2,
+          swingSpeed: Math.random() * 0.05 + 0.025,
+          size: Math.random() * 2.2 + 5.0,
+          alpha: 1,
+          decay: Math.random() * 0.005 + 0.012,
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.06,
+        });
       }
-    };
 
-    const handleTrailMove = (clientX, clientY) => {
-      const now = performance.now();
-      const dx = clientX - lastSpawnX;
-      const dy = clientY - lastSpawnY;
-      const dist = Math.hypot(dx, dy);
-
-      // Rải cánh tuyết đều đặn theo quãng đường di tay (~14px) mà không bị dồn cục
-      if (dist >= 14 || now - lastSpawnTime > 45) {
-        spawnSingleTrailFlake(clientX, clientY, dx * 0.15, dy * 0.15);
-        lastSpawnX = clientX;
-        lastSpawnY = clientY;
-        lastSpawnTime = now;
-      }
-    };
-
-    const onPointerMove = (e) => {
-      if (e.clientX !== undefined && e.clientY !== undefined) {
-        handleTrailMove(e.clientX, e.clientY);
-      }
-    };
-
-    const onTouchMove = (e) => {
-      const touch = e.touches?.[0];
-      if (touch) {
-        handleTrailMove(touch.clientX, touch.clientY);
+      // Vòng giữa: 6 cánh tuyết ❄️ xen kẽ ở khoảng cách trung bình (~50px - 75px)
+      const midCount = 6;
+      for (let i = 0; i < midCount; i++) {
+        const baseAngle = (Math.PI * 2 * i) / midCount + Math.PI / midCount;
+        const angle = baseAngle + (Math.random() - 0.5) * 0.2;
+        const startDist = 8 + Math.random() * 5;
+        const speed = Math.random() * 1.0 + 2.1;
+        burstFlakes.push({
+          isCenterBloom: false,
+          x: clientX + Math.cos(angle) * startDist,
+          y: clientY + Math.sin(angle) * startDist,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          gravity: 0.025,
+          drag: 0.96,
+          swing: Math.random() * Math.PI * 2,
+          swingSpeed: Math.random() * 0.05 + 0.02,
+          size: Math.random() * 1.8 + 4.0,
+          alpha: 0.95,
+          decay: Math.random() * 0.005 + 0.013,
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.05,
+        });
       }
     };
 
     const onPointerDown = (e) => {
       if (e.clientX !== undefined && e.clientY !== undefined) {
-        // Khi chạm nhẹ chỉ thả 1-2 cánh tuyết ❄️ nhỏ nhắn tại điểm chạm, không tạo chùm
-        spawnSingleTrailFlake(e.clientX, e.clientY);
-        lastSpawnX = e.clientX;
-        lastSpawnY = e.clientY;
-        lastSpawnTime = performance.now();
+        spawnBloomSnowflakes(e.clientX, e.clientY);
       }
     };
 
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('pointerdown', onPointerDown, { passive: true });
 
-    // Hàm vẽ cánh tuyết ❄️ 6 nhánh sắc nét, nổi bật trên cả nền sáng và nền thẻ
-    const drawMiniSnowflake = (x, y, radius, rotation, alpha, darkMode) => {
+    // Hàm vẽ cánh tuyết ❄️ 6 nhánh tinh xảo
+    const drawSnowflakeCrystal = (x, y, radius, rotation, alpha, darkMode, isCenter = false) => {
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(rotation);
@@ -128,28 +134,36 @@ const SnowEffect = ({ isDark = false }) => {
         ctx.moveTo(0, 0);
         ctx.lineTo(0, -radius);
 
-        const branchPos = radius * 0.56;
-        const branchLen = radius * 0.38;
-        ctx.moveTo(0, -branchPos);
-        ctx.lineTo(-branchLen * 0.75, -branchPos - branchLen * 0.65);
-        ctx.moveTo(0, -branchPos);
-        ctx.lineTo(branchLen * 0.75, -branchPos - branchLen * 0.65);
+        const b1Pos = radius * 0.52;
+        const b1Len = radius * 0.36;
+        ctx.moveTo(0, -b1Pos);
+        ctx.lineTo(-b1Len * 0.75, -b1Pos - b1Len * 0.65);
+        ctx.moveTo(0, -b1Pos);
+        ctx.lineTo(b1Len * 0.75, -b1Pos - b1Len * 0.65);
+
+        if (radius > 5) {
+          const b2Pos = radius * 0.78;
+          const b2Len = radius * 0.22;
+          ctx.moveTo(0, -b2Pos);
+          ctx.lineTo(-b2Len * 0.75, -b2Pos - b2Len * 0.65);
+          ctx.moveTo(0, -b2Pos);
+          ctx.lineTo(b2Len * 0.75, -b2Pos - b2Len * 0.65);
+        }
 
         ctx.rotate(Math.PI / 3);
       }
 
       if (darkMode) {
         ctx.strokeStyle = `rgba(240, 249, 255, ${alpha})`;
-        ctx.shadowColor = 'rgba(56, 189, 248, 0.85)';
-        ctx.shadowBlur = 5;
+        ctx.shadowColor = 'rgba(56, 189, 248, 0.9)';
+        ctx.shadowBlur = isCenter ? 7 : 5;
       } else {
-        // Ở chế độ sáng: cánh tuyết màu trắng sáng có viền bóng xanh dương đậm để hiện rõ trên mọi thẻ
         ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-        ctx.shadowColor = 'rgba(2, 132, 199, 0.75)';
-        ctx.shadowBlur = 5;
+        ctx.shadowColor = 'rgba(2, 132, 199, 0.8)';
+        ctx.shadowBlur = isCenter ? 7 : 5;
       }
 
-      ctx.lineWidth = 1.35;
+      ctx.lineWidth = isCenter ? 1.5 : 1.3;
       ctx.lineCap = 'round';
       ctx.stroke();
 
@@ -192,23 +206,40 @@ const SnowEffect = ({ isDark = false }) => {
         ctx.restore();
       }
 
-      // 2. Vẽ các cánh tuyết ❄️ rải rác đi theo con trỏ / ngón tay
-      for (let i = trailFlakes.length - 1; i >= 0; i--) {
-        const p = trailFlakes[i];
-        p.swing += p.swingSpeed;
-        p.vy += 0.018; // Rơi nhẹ nhàng lơ lửng
-        p.vx *= 0.98;
-        p.x += p.vx + Math.sin(p.swing) * 0.28;
-        p.y += p.vy;
-        p.rotation += p.rotationSpeed;
-        p.alpha -= p.decay;
+      // 2. Vẽ bông tuyết nở bung rộng và thoáng khi nhấn
+      for (let i = burstFlakes.length - 1; i >= 0; i--) {
+        const p = burstFlakes[i];
 
-        if (p.alpha <= 0) {
-          trailFlakes.splice(i, 1);
-          continue;
+        if (p.isCenterBloom) {
+          if (p.size < p.maxSize) {
+            p.size += p.growSpeed;
+            p.growSpeed *= 0.92;
+          }
+          p.rotation += p.rotationSpeed;
+          p.alpha -= p.decay;
+
+          if (p.alpha <= 0) {
+            burstFlakes.splice(i, 1);
+            continue;
+          }
+
+          drawSnowflakeCrystal(p.x, p.y, p.size, p.rotation, p.alpha, darkMode, true);
+        } else {
+          p.swing += p.swingSpeed;
+          p.vx *= p.drag;
+          p.vy = p.vy * p.drag + p.gravity;
+          p.x += p.vx + Math.sin(p.swing) * 0.22;
+          p.y += p.vy;
+          p.rotation += p.rotationSpeed;
+          p.alpha -= p.decay;
+
+          if (p.alpha <= 0) {
+            burstFlakes.splice(i, 1);
+            continue;
+          }
+
+          drawSnowflakeCrystal(p.x, p.y, p.size, p.rotation, p.alpha, darkMode, false);
         }
-
-        drawMiniSnowflake(p.x, p.y, p.size, p.rotation, p.alpha, darkMode);
       }
 
       animationFrameId = requestAnimationFrame(render);
@@ -219,8 +250,6 @@ const SnowEffect = ({ isDark = false }) => {
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('pointerdown', onPointerDown);
     };
   }, []);

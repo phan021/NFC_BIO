@@ -86,12 +86,10 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // Cập nhật tiêu đề trang theo tên chủ sở hữu
+  // Đặt tiêu đề tab trình duyệt cố định là NFC Bio
   useEffect(() => {
-    if (profile?.name) {
-      document.title = `${profile.name} — NFC Bio`;
-    }
-  }, [profile?.name]);
+    document.title = 'NFC Bio';
+  }, []);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
