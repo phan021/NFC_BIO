@@ -26,6 +26,14 @@ const SocialList = ({ profile, isDark, onOpenBankQr }) => {
     return raw.replace(/\s*\([0-9+\s.]+\)\s*$/, '').trim();
   };
 
+  // Tự động thêm https:// nếu đường dẫn người dùng nhập thiếu giao thức
+  const ensureUrl = (rawUrl, fallbackUrl) => {
+    const trimmed = (rawUrl || '').trim();
+    if (!trimmed) return fallbackUrl;
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  };
+
   const bankName = profile.bank?.bankName || 'Ngân hàng';
   const accountNumber = profile.bank?.accountNumber || 'Chưa cập nhật';
 
@@ -53,7 +61,7 @@ const SocialList = ({ profile, isDark, onOpenBankQr }) => {
       type: 'zalo',
       title: 'Zalo',
       subtitle: getOnlyName(profile.socials?.zalo?.displayName, profile.name),
-      href: zaloUrl,
+      href: ensureUrl(zaloUrl, 'https://zalo.me'),
       copyValue: cleanPhone,
       actionType: 'link',
     },
@@ -62,7 +70,7 @@ const SocialList = ({ profile, isDark, onOpenBankQr }) => {
       type: 'facebook',
       title: 'Facebook',
       subtitle: getOnlyName(profile.socials?.facebook?.displayName, profile.name),
-      href: profile.socials?.facebook?.url || 'https://facebook.com',
+      href: ensureUrl(profile.socials?.facebook?.url, 'https://facebook.com'),
       copyValue: profile.socials?.facebook?.url,
       actionType: 'link',
     },
@@ -74,7 +82,7 @@ const SocialList = ({ profile, isDark, onOpenBankQr }) => {
         profile.socials?.instagram?.account ||
         profile.socials?.instagram?.displayName ||
         'Chưa cập nhật',
-      href: profile.socials?.instagram?.url || 'https://instagram.com',
+      href: ensureUrl(profile.socials?.instagram?.url, 'https://instagram.com'),
       copyValue:
         profile.socials?.instagram?.account ||
         profile.socials?.instagram?.displayName,
@@ -88,7 +96,7 @@ const SocialList = ({ profile, isDark, onOpenBankQr }) => {
         profile.socials?.tiktok?.account ||
         profile.socials?.tiktok?.displayName ||
         'Chưa cập nhật',
-      href: profile.socials?.tiktok?.url || 'https://tiktok.com',
+      href: ensureUrl(profile.socials?.tiktok?.url, 'https://tiktok.com'),
       copyValue:
         profile.socials?.tiktok?.account ||
         profile.socials?.tiktok?.displayName,
@@ -102,7 +110,7 @@ const SocialList = ({ profile, isDark, onOpenBankQr }) => {
         profile.socials?.threads?.account ||
         profile.socials?.threads?.displayName ||
         'Chưa cập nhật',
-      href: profile.socials?.threads?.url || 'https://threads.net',
+      href: ensureUrl(profile.socials?.threads?.url, 'https://threads.net'),
       copyValue:
         profile.socials?.threads?.account ||
         profile.socials?.threads?.displayName,
@@ -116,7 +124,7 @@ const SocialList = ({ profile, isDark, onOpenBankQr }) => {
         profile.socials?.locket?.account ||
         profile.socials?.locket?.displayName ||
         'Chưa cập nhật',
-      href: profile.socials?.locket?.url || 'https://locket.cam',
+      href: ensureUrl(profile.socials?.locket?.url, 'https://locket.cam'),
       copyValue:
         profile.socials?.locket?.account ||
         profile.socials?.locket?.displayName,

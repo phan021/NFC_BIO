@@ -169,12 +169,14 @@ function App() {
 
   // Lưu toàn bộ thông tin chỉnh sửa
   const handleSaveForm = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    if (saving) return;
     setSaving(true);
     try {
       const cleanPassword = (formData.adminPassword || '').trim() || DEFAULT_ADMIN_PIN;
       const payload = {
         ...formData,
+        name: (formData.name || '').trim() || DEFAULT_BIO_DATA.name,
         adminPassword: cleanPassword,
       };
       const result = await updateBioProfile(payload);
@@ -641,7 +643,7 @@ function App() {
                   <div>
                     <label className="block text-xs font-semibold mb-1">2. Email</label>
                     <input
-                      type="email"
+                      type="text"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className={`w-full px-3.5 py-2 rounded-xl text-sm border outline-none ${
@@ -731,7 +733,7 @@ function App() {
                       }`}
                     />
                     <input
-                      type="url"
+                      type="text"
                       placeholder={net.urlPlaceholder}
                       value={formData.socials?.[net.key]?.url || ''}
                       onChange={(e) => handleSocialChange(net.key, 'url', e.target.value)}
@@ -861,10 +863,10 @@ function App() {
                 Đóng
               </button>
               <button
-                type="submit"
-                form="edit-bio-form"
+                type="button"
+                onClick={handleSaveForm}
                 disabled={saving}
-                className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-600 text-white shadow-md"
+                className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-600 text-white shadow-md active:scale-98"
               >
                 <Save size={15} />
                 <span>{saving ? 'Đang lưu...' : 'Lưu thông tin Bio'}</span>
