@@ -7,14 +7,27 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 
-// Cấu hình Firebase - Đọc từ biến môi trường (.env) hoặc điền trực tiếp tại đây
+// Cấu hình Firebase kết nối trực tiếp tới project "nfcbio"
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  apiKey:
+    import.meta.env.VITE_FIREBASE_API_KEY ||
+    'AIzaSyBpt0THuDYWqR5sLTEDTYbAFm1tnucLNi8',
+  authDomain:
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ||
+    'nfcbio.firebaseapp.com',
+  projectId:
+    import.meta.env.VITE_FIREBASE_PROJECT_ID ||
+    'nfcbio',
+  storageBucket:
+    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ||
+    'nfcbio.firebasestorage.app',
+  messagingSenderId:
+    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ||
+    '313381115876',
+  appId:
+    import.meta.env.VITE_FIREBASE_APP_ID ||
+    '1:313381115876:web:aa6e084e217b34729a59f1',
+  measurementId: 'G-N3RNVQ8GPT',
 };
 
 export const isFirebaseConfigured = Boolean(
